@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aptechka Pro Final</title>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(90deg, #1d8a88 0%, #52b2a1 100%);
+            --bg-dark: #2c3136;
+            --input-bg: #f0f3f5;
+            --text-label: #b2866b;
+            --text-main: #333d42;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-dark); display: flex; justify-content: center; padding: 20px; margin: 0; }
+        
+        .phone-container { 
+            width: 360px; background: white; border-radius: 30px; overflow-y: auto; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4); height: 95vh; display: flex; flex-direction: column; position: relative;
+        }
+
+        .header { padding: 20px 20px 5px 20px; display: flex; justify-content: space-between; align-items: center; color: #1d8a88; font-weight: bold; }
+        .lang-switch { font-size: 12px; cursor: pointer; background: #eee; padding: 4px 10px; border-radius: 12px; color: #555; font-weight: bold; }
+
+        .hero-section { text-align: center; padding: 0 20px; }
+        .hero-section h1 { font-size: 28px; margin: 0; color: var(--text-main); font-weight: 800; }
+
+        .search-box-wrapper { margin: 15px 20px 10px 20px; position: relative; display: flex; align-items: center; }
+        .search-box { border: 2px solid #a29bfe; border-radius: 25px; padding: 10px 45px 10px 20px; width: 100%; box-sizing: border-box; }
+        .search-box input { border: none; outline: none; width: 100%; font-size: 14px; background: transparent; }
+
+        .toggle-arrow { position: absolute; right: 15px; font-size: 18px; color: #a29bfe; cursor: pointer; transition: transform 0.3s ease; font-weight: bold; }
+        .toggle-arrow.open { transform: rotate(90deg); }
+
+        #form-container { overflow: hidden; transition: max-height 0.5s ease-in-out; max-height: 0; }
+        #form-container.open { max-height: 1200px; padding-bottom: 20px; }
+
+        .content { padding: 0 20px; }
+        .input-group { margin-bottom: 12px; }
+        .input-group label { display: block; font-size: 10px; font-weight: bold; color: var(--text-label); margin-bottom: 4px; text-transform: uppercase; }
+        .input-group input, .input-group textarea { width: 100%; background: var(--input-bg); border: none; padding: 10px; border-radius: 12px; box-sizing: border-box; font-size: 14px; color: var(--text-main); }
+
+        .photo-upload-zone { border: 2px dashed #d1dadd; border-radius: 15px; padding: 10px; text-align: center; background: #f8fafb; cursor: pointer; }
+        #preview-img { width: 100%; border-radius: 10px; margin-top: 10px; display: none; }
+
+        .save-btn { background: var(--primary-gradient); color: white; border: none; width: 100%; padding: 15px; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .update-mode { background: #e67e22 !important; }
+
+        .tabs { display: flex; justify-content: space-around; padding: 5px 20px 15px 20px; gap: 10px; }
+        .tab-btn { flex: 1; padding: 10px; border-radius: 15px; border: none; background: #eee; font-size: 11px; font-weight: bold; cursor: pointer; }
+        .tab-btn.active { background: #1d8a88; color: white; }
+
+        #medicine-list { padding: 0 20px 20px 20px; }
+        .card { background: #fff; border-radius: 18px; padding: 15px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); border-left: 5px solid #1d8a88; cursor: pointer; position: relative; }
+        
+        .card-actions { position: absolute; top: 8px; right: 10px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .delete-icon { color: #ff7675; font-size: 22px; cursor: pointer; line-height: 1; }
+        .edit-icon { color: #3498db; font-size: 18px; cursor: pointer; line-height: 1; margin-top: -2px; }
+
+        .card-header { font-size: 12px; color: #888; font-weight: bold; margin-bottom: 4px; }
+        .card h3 { margin: 0; font-size: 17px; color: var(--text-main); width: 75%; }
+        .card-desc-short { font-size: 12px; color: #777; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 85%; }
+
+        /* Modal */
+        .modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: flex-end; z-index: 100; }
+        .modal-content { width: 100%; background: white; border-top-left-radius: 30px; border-top-right-radius: 30px; max-height: 90%; overflow-y: auto; animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        .modal-image-box { width: 100%; height: 220px; background: #e0f2f1; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .modal-image-box img { width: 100%; height: 100%; object-fit: cover; }
+        .modal-emoji-placeholder { font-size: 80px; } /* Smiley esli net foto */
+
+        .close-modal { position: absolute; top: 15px; right: 15px; background: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold; z-index: 10; }
+        .modal-info { padding: 20px; }
+        .badge { background: #e0f2f1; color: #1d8a88; padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; display: inline-block; margin-right: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="phone-container">
+    <div class="header">
+        <span id="ui-app-name">Аптечка</span>
+        <div class="lang-switch" onclick="toggleLang()" id="ui-lang-btn">RU / UZ</div>
+    </div>
+    <div class="hero-section"><h1 id="ui-hero-title">АПТЕЧКА</h1></div>
+
+    <div class="search-box-wrapper">
+        <div class="search-box"><input type="text" id="searchInput" oninput="search()"></div>
+        <div class="toggle-arrow" id="toggleArrow" onclick="toggleForm()">&#10095;</div>
+    </div>
+
+    <div class="content">
+        <div id="form-container">
+            <input type="hidden" id="editId">
+            <div class="input-group"><label id="ui-label-name">Название препарата</label><input type="text" id="medName"></div>
+            <div class="input-group"><label id="ui-label-desc">Описание</label><textarea id="medDesc" rows="2"></textarea></div>
+            <div class="input-group">
+                <label id="ui-label-amount">Сколько осталось</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="medAmount" style="flex: 2;">
+                    <label style="font-size: 9px; display:flex; align-items:center; color:red; cursor:pointer;"><input type="checkbox" id="isEmpty" onchange="toggleStock()"><span id="ui-label-none">НЕ ОСТАЛОСЬ</span></label>
+                </div>
+            </div>
+            <div class="input-group" style="display: flex; gap: 10px;">
+                <div style="flex: 1;"><label id="ui-label-start">Создано</label><input type="text" id="dateStart" maxlength="10" placeholder="DD.MM.YYYY" oninput="applyDateMask(this)"></div>
+                <div style="flex: 1;"><label id="ui-label-end">Истекает</label><input type="text" id="dateEnd" maxlength="10" placeholder="DD.MM.YYYY" oninput="applyDateMask(this)"></div>
+            </div>
+            <div class="input-group">
+                <label id="ui-label-photo">Фото</label>
+                <div class="photo-upload-zone" onclick="document.getElementById('fileInput').click()">
+                    <div id="upload-label">📷</div>
+                    <img id="preview-img" src="">
+                </div>
+                <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="previewFile()">
+            </div>
+            <button id="mainActionBtn" class="save-btn" onclick="save()">Сохранить &rarr;</button>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" id="tabInStock" onclick="setTab('inStock')">Сохраненные</button>
+        <button class="tab-btn" id="tabEmpty" onclick="setTab('empty')">Не осталось</button>
+    </div>
+
+    <div id="medicine-list"></div>
+
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-image-box">
+                <div class="close-modal" onclick="closeModal()">✕</div>
+                <div id="modalImgContainer" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+                    </div>
+            </div>
+            <div class="modal-info">
+                <h2 id="modalTitle"></h2>
+                <div id="modalBadges"></div>
+                <div style="background:#f8fafb; border-radius:15px; padding:15px; margin-top:15px;">
+                    <h4 id="ui-modal-desc-title" style="margin:0 0 5px 0; color:#1d8a88;">📄 Описание препарата</h4>
+                    <p id="modalDescText" style="font-size:13px; color:#555; margin:0; line-height:1.5;"></p>
+                </div>
+                <div style="margin-top:15px; font-size:11px; color:#b2866b;">
+                    <div id="modalDateStart"></div><div id="modalDateEnd"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let db = JSON.parse(localStorage.getItem('aptechka_v19')) || [];
+    let currentPhoto = null;
+    let currentTab = 'inStock';
+    let currentLang = 'ru';
+    let isEditMode = false;
+
+    const langData = {
+        ru: {
+            appName: "Аптечка", hero: "АПТЕЧКА", search: "Найти лекарство...",
+            name: "Название препарата", desc: "Описание", amount: "Сколько осталось", none: "НЕ ОСТАЛОСЬ",
+            start: "Создано", end: "Истекает", photo: "Фото", save: "Сохранить", update: "Изменить детали",
+            tab1: "Сохраненные", tab2: "Не осталось", modalDesc: "📄 Описание препарата",
+            created: "Создано", expires: "Истекает", stock: "В наличии", empty: "Закончилось",
+            months: ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"]
+        },
+        uz: {
+            appName: "Dorixonam", hero: "DORIXONA", search: "Nomi bo'yicha qidiruv...",
+            name: "Nomi", desc: "Tavsif", amount: "Qancha qoldi", none: "QOLMADI",
+            start: "Yaratildi", end: "Muddati", photo: "Rasm", save: "Saqlash", update: "O'zgartirish",
+            tab1: "Saqlanganlar", tab2: "Tugaganlar", modalDesc: "📄 Preparat tavsifi",
+            created: "Yaratildi", expires: "Tugaydi", stock: "Mavjud", empty: "Tugagan",
+            months: ["yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avgust", "sentyabr", "oktyabr", "noyabr", "dekabr"]
+        }
+    };
+
+    function toggleLang() {
+        currentLang = currentLang === 'ru' ? 'uz' : 'ru';
+        updateUI();
+    }
+
+    function updateUI() {
+        const l = langData[currentLang];
+        document.getElementById('ui-app-name').innerText = l.appName;
+        document.getElementById('ui-hero-title').innerText = l.hero;
+        document.getElementById('searchInput').placeholder = l.search;
+        document.getElementById('ui-label-name').innerText = l.name;
+        document.getElementById('ui-label-desc').innerText = l.desc;
+        document.getElementById('ui-label-amount').innerText = l.amount;
+        document.getElementById('ui-label-none').innerText = l.none;
+        document.getElementById('ui-label-start').innerText = l.start;
+        document.getElementById('ui-label-end').innerText = l.end;
+        document.getElementById('ui-label-photo').innerText = l.photo;
+        document.getElementById('mainActionBtn').innerText = isEditMode ? l.update : l.save;
+        document.getElementById('tabInStock').innerText = l.tab1;
+        document.getElementById('tabEmpty').innerText = l.tab2;
+        document.getElementById('ui-modal-desc-title').innerText = l.modalDesc;
+        render();
+    }
+
+    function toggleForm(forceOpen = false) {
+        const container = document.getElementById('form-container');
+        const arrow = document.getElementById('toggleArrow');
+        if(forceOpen) { container.classList.add('open'); arrow.classList.add('open'); }
+        else { container.classList.toggle('open'); arrow.classList.toggle('open'); }
+    }
+
+    function applyDateMask(i) {
+        let v = i.value.replace(/\D/g, '');
+        if (v.length > 8) v = v.slice(0, 8);
+        let f = '';
+        if (v.length > 0) { f = v.slice(0, 2); if (v.length > 2) { f += '.' + v.slice(2, 4); if (v.length > 4) f += '.' + v.slice(4, 8); } }
+        i.value = f;
+    }
+
+    function formatDate(s) {
+        if (!s || !s.includes('.')) return s;
+        const p = s.split('.');
+        const m = langData[currentLang].months[parseInt(p[1])-1] || p[1];
+        return `${p[0]} ${m} ${p[2]}`;
+    }
+
+    function toggleStock() {
+        const i = document.getElementById('medAmount');
+        const ch = document.getElementById('isEmpty').checked;
+        i.disabled = ch;
+        if(ch) i.value = langData[currentLang].none; else i.value = "";
+    }
+
+    function previewFile() {
+        const file = document.getElementById('fileInput').files[0];
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            document.getElementById('preview-img').src = reader.result;
+            document.getElementById('preview-img').style.display = 'block';
+            document.getElementById('upload-label').style.display = 'none';
+            currentPhoto = reader.result;
+        }
+        if (file) reader.readAsDataURL(file);
+    }
+
+    function save() {
+        const name = document.getElementById('medName').value;
+        const desc = document.getElementById('medDesc').value;
+        const amount = document.getElementById('medAmount').value;
+        const empty = document.getElementById('isEmpty').checked;
+        if (!name) return;
+
+        const medData = {
+            name, desc, amount, isEmpty: empty,
+            dStart: document.getElementById('dateStart').value,
+            dEnd: document.getElementById('dateEnd').value,
+            img: currentPhoto
+        };
+
+        if (isEditMode) {
+            const id = document.getElementById('editId').value;
+            const idx = db.findIndex(m => m.id === id);
+            db[idx] = { ...db[idx], ...medData };
+        } else {
+            const id = "#" + (db.length + 1).toString().padStart(3, '0');
+            db.push({ id, ...medData });
+        }
+        localStorage.setItem('aptechka_v19', JSON.stringify(db));
+        location.reload();
+    }
+
+    function startEdit(item) {
+        toggleForm(true);
+        isEditMode = true;
+        document.getElementById('editId').value = item.id;
+        document.getElementById('medName').value = item.name;
+        document.getElementById('medDesc').value = item.desc || "";
+        document.getElementById('medAmount').value = item.isEmpty ? "" : item.amount;
+        document.getElementById('isEmpty').checked = item.isEmpty;
+        document.getElementById('dateStart').value = item.dStart || "";
+        document.getElementById('dateEnd').value = item.dEnd || "";
+        if(item.img) {
+            document.getElementById('preview-img').src = item.img;
+            document.getElementById('preview-img').style.display = 'block';
+            document.getElementById('upload-label').style.display = 'none';
+            currentPhoto = item.img;
+        }
+        updateUI();
+        window.scrollTo(0,0);
+    }
+
+    function render(data = db) {
+        const list = document.getElementById('medicine-list');
+        list.innerHTML = '';
+        const filtered = data.filter(m => currentTab === 'empty' ? m.isEmpty : !m.isEmpty);
+        filtered.slice().reverse().forEach((item) => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.onclick = () => openModal(item);
+            card.innerHTML = `
+                <div class="card-actions">
+                    <span class="delete-icon" onclick="event.stopPropagation(); deleteItem('${item.id}')">×</span>
+                    <span class="edit-icon" onclick="event.stopPropagation(); startEdit(${JSON.stringify(item).replace(/"/g, '&quot;')})">✎</span>
+                </div>
+                <div class="card-header">${item.id} <span style="color:${item.isEmpty?'#e74c3c':'#1d8a88'}">(${item.amount})</span></div>
+                <h3>${item.name}</h3>
+                <div class="card-desc-short">${item.desc || ""}</div>
+            `;
+            list.appendChild(card);
+        });
+    }
+
+    function openModal(item) {
+        const l = langData[currentLang];
+        document.getElementById('modalTitle').innerText = item.name;
+        document.getElementById('modalDescText').innerText = item.desc || "...";
+        document.getElementById('modalBadges').innerHTML = `
+            <div class="badge" style="background:${item.isEmpty?'#ffebee':'#e0f2f1'}; color:${item.isEmpty?'#c62828':'#1d8a88'}">${item.isEmpty?l.empty:l.stock}</div>
+            <div class="badge">${item.amount}</div>
+        `;
+        document.getElementById('modalDateStart').innerText = l.created + ": " + formatDate(item.dStart);
+        document.getElementById('modalDateEnd').innerText = l.expires + ": " + formatDate(item.dEnd);
+        
+        const container = document.getElementById('modalImgContainer');
+        if (item.img) {
+            container.innerHTML = `<img src="${item.img}" alt="photo">`;
+        } else {
+            // EMOJI SMILEY vmesto foto
+            container.innerHTML = `<div class="modal-emoji-placeholder">💊</div>`;
+        }
+        
+        document.getElementById('modalOverlay').style.display = 'flex';
+    }
+
+    function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
+    function setTab(t) { currentTab = t; document.getElementById('tabInStock').classList.toggle('active', t === 'inStock'); document.getElementById('tabEmpty').classList.toggle('active', t === 'empty'); render(); }
+    function deleteItem(id) { if(confirm("Udalit'?")) { db = db.filter(m => m.id !== id); localStorage.setItem('aptechka_v19', JSON.stringify(db)); render(); } }
+    function search() { const q = document.getElementById('searchInput').value.toLowerCase(); render(db.filter(m => m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q))); }
+
+    updateUI();
+</script>
+
+</body>
+</html>
